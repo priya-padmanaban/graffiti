@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  userId    String   @unique // The client-provided userId (from localStorage)
+  credits   Int      @default(500) // Starting credits
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  strokes Stroke[]
+}
+
+model Stroke {
+  id        String   @id @default(uuid())
+  userId    String
+  roomId    String
+  points    Json     // Array of {x, y, timestamp?}
+  color     String
+  size      Float
+  opacity   Float
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([roomId, createdAt])
+  @@index([roomId, id])
+}
+
+model Snapshot {
+  id                    String   @id @default(uuid())
+  roomId                String
+  r2Key                 String   @unique // S3/R2 object key
+  r2Url                 String?  // Full URL if available
+  lastStrokeIdIncluded  String?  // Last stroke ID included in this snapshot
+  createdAt             DateTime @default(now())
+
+  @@index([roomId, createdAt])
+}
+

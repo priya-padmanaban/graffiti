@@ -1,0 +1,32 @@
+# Fly.io configuration for WebSocket server
+app = "graffiti-server"
+primary_region = "iad"
+
+[build]
+  builder = "paketobuildpacks/builder:base"
+
+[[services]]
+  internal_port = 3001
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+[[services]]
+  internal_port = 3002
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 3002
+    handlers = ["tls", "http"]
+
+[env]
+  PORT = "3001"
+  WS_PORT = "3002"
+
