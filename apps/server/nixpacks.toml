@@ -1,0 +1,19 @@
+# Nixpacks configuration for Railway
+[phases.setup]
+nixPkgs = ["nodejs-18_x"]
+
+[phases.install]
+cmds = [
+  "cd ../.. && npm install",
+  "cd ../.. && npm run build:shared",
+  "cd apps/server && npx prisma generate"
+]
+
+[phases.build]
+cmds = [
+  "cd apps/server && npm run build:server"
+]
+
+[start]
+cmd = "cd apps/server && npm start"
+

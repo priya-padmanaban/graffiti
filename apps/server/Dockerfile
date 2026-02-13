@@ -8,17 +8,17 @@ COPY package.json turbo.json ./
 COPY packages/shared ./packages/shared
 COPY apps/server ./apps/server
 
-# Install dependencies
+# Install dependencies (from root)
 RUN npm install
 
-# Build shared package
+# Build shared package first
 RUN cd packages/shared && npm run build
-
-# Build server
-RUN cd apps/server && npm run build
 
 # Generate Prisma client
 RUN cd apps/server && npx prisma generate
+
+# Build server (this will use the built shared package)
+RUN cd apps/server && npm run build:server
 
 WORKDIR /app/apps/server
 

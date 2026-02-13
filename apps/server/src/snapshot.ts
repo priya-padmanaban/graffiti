@@ -168,7 +168,7 @@ export async function getStrokesSinceSnapshot(roomId: string): Promise<StrokeChu
     },
   });
 
-  return strokes.map((stroke) => ({
+  return strokes.map((stroke: any) => ({
     id: stroke.id,
     userId: stroke.userId,
     roomId: stroke.roomId,
