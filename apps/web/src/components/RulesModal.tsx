@@ -23,7 +23,7 @@ export default function RulesModal({ isOpen, onClose }: RulesModalProps) {
             <strong>Cost:</strong> {CREDIT_CONSTANTS.COST_PER_POINT} credit per point drawn
           </p>
           <p>
-            <strong>Earning:</strong> Every 5 minutes you stay connected, you earn {CREDIT_CONSTANTS.EARN_AMOUNT} more credits
+            <strong>Earning:</strong> You earn {CREDIT_CONSTANTS.EARN_RATE_PER_SECOND.toFixed(2)} credits per second while connected (~{Math.round(CREDIT_CONSTANTS.EARN_RATE_PER_SECOND * 60)} per minute)
           </p>
           <p className="text-sm text-gray-500 mt-4">
             Credits are enforced server-side to prevent abuse. Draw responsibly!
