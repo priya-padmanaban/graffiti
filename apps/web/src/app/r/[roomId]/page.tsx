@@ -22,6 +22,7 @@ export default function RoomPage() {
   const [brushSize, setBrushSize] = useState(10);
   const [opacity, setOpacity] = useState(1);
   const [showRules, setShowRules] = useState(false);
+  const [valentinesMessage, setValentinesMessage] = useState<string | null>(null);
 
   // Initialize WebSocket
   useEffect(() => {
@@ -49,6 +50,8 @@ export default function RoomPage() {
           setInfiniteCredits(message.infiniteCredits || false);
         } else if (message.type === "error") {
           console.error("Server error:", message.message);
+        } else if (message.type === "valentines_message") {
+          setValentinesMessage(message.message);
         }
       });
     });
@@ -152,6 +155,22 @@ export default function RoomPage() {
 
       {/* Rules modal */}
       <RulesModal isOpen={showRules} onClose={() => setShowRules(false)} />
+
+      {/* Valentine's Day message notification */}
+      {valentinesMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-pink-100 border-2 border-pink-300 rounded-lg shadow-lg p-4 max-w-md">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-pink-800 font-medium">{valentinesMessage}</p>
+            <button
+              onClick={() => setValentinesMessage(null)}
+              className="text-pink-600 hover:text-pink-800 font-bold text-xl leading-none"
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Cheat code input - bottom right */}
       <div className="fixed bottom-4 right-4 z-50">

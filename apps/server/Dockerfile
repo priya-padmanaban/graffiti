@@ -30,5 +30,6 @@ WORKDIR /app/apps/server
 
 EXPOSE 3001 3002
 
-CMD ["node", "dist/index.js"]
+# Run migrations on startup, then start the server
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
 

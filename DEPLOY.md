@@ -126,18 +126,27 @@ Click **"Save"**
 4. Click **"Generate Domain"**
 5. **Copy your Railway URL** (e.g., `graffiti-server-production.up.railway.app`)
 
-### Step 6: Run Database Migrations
+### Step 6: Database Migrations (Automatic!)
 
-1. In Railway, go to your **server service**
-2. Click **"Connect"** tab (or terminal icon)
-3. Click **"Open Shell"** or **"New Terminal"**
-4. Run:
+**Good news!** Migrations now run automatically when the server starts. The Dockerfile has been configured to run `prisma migrate deploy` before starting the server.
+
+**You don't need to do anything manually!** Just deploy and the migrations will run automatically on first startup.
+
+**Note:** If you need to run migrations manually (e.g., for troubleshooting), you can use Railway's web terminal:
+
+1. In Railway, click on your **server service**
+2. Look for **"Terminal"** tab or **"Connect"** → **"Shell"** button
+3. Run:
    ```bash
    cd apps/server
    npx prisma migrate deploy
    ```
-5. Wait for "Applied migration" messages
-6. Close the terminal
+
+**Option C: Add to Dockerfile (Automatic, but less flexible)**
+
+If you can't access the terminal, you can modify the Dockerfile to run migrations on startup. However, this runs migrations every time the container starts, which is usually fine but not ideal.
+
+**Note:** If migrations fail, check that `DATABASE_URL` is set correctly in Railway variables.
 
 ## Part 3: Connect Vercel to Railway
 

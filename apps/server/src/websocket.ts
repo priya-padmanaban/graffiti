@@ -239,14 +239,22 @@ async function handleMessage(conn: Connection, rawMessage: string): Promise<void
           return;
         }
 
+        const code = message.code.toLowerCase();
+
         // Check if code is correct
-        if (message.code.toLowerCase() === "lactosetolerant") {
+        if (code === "lactosetolerant") {
           grantInfiniteCredits(conn.userId);
           const credits = await getCurrentCredits(conn.userId);
           sendToConnection(conn, {
             type: "credits_update",
             credits,
             infiniteCredits: true,
+          });
+        } else if (code === "lactoseintolerant") {
+          // Easter egg: Valentine's Day message
+          sendToConnection(conn, {
+            type: "valentines_message",
+            message: "happy valentine's day 2025",
           });
         } else {
           sendToConnection(conn, { type: "error", message: "Invalid cheat code" });

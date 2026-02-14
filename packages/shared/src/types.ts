@@ -35,6 +35,7 @@ export type ServerMessage =
   | { type: "stroke_chunk_broadcast"; chunk: StrokeChunkWithId }
   | { type: "credits_update"; credits: number; infiniteCredits?: boolean }
   | { type: "error"; message: string }
+  | { type: "valentines_message"; message: string }
   | { type: "pong" };
 
 // Credit system constants
