@@ -31,9 +31,9 @@ Follow these exact steps to deploy your server to Railway.
 2. Find **"Build Command"** field
 3. Paste this exact command:
    ```
-   npm run build:full
+   cd ../.. && npm ci && npm run build:shared && cd apps/server && npx prisma generate && npm run build:server
    ```
-   (This uses `npm ci` which is more reliable for builds)
+   (This uses `npm ci` which is more reliable for builds and avoids conflicts)
 4. Find **"Start Command"** field
 5. Set it to:
    ```
