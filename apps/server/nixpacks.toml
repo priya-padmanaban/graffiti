@@ -4,7 +4,7 @@ nixPkgs = ["nodejs-18_x"]
 
 [phases.install]
 cmds = [
-  "cd ../.. && npm ci",
+  "cd ../.. && npm install",
   "cd ../.. && npm run build:shared",
   "cd apps/server && npx prisma generate"
 ]

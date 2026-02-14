@@ -18,12 +18,18 @@ Follow these exact steps to deploy your server to Railway.
 
 ## Step 3: Configure the Service
 
+**IMPORTANT**: Railway is using the Dockerfile. You need to set the root directory correctly.
+
 1. Railway will create a service automatically
 2. Click on the service (it might be named after your repo)
 3. Go to **Settings** tab (left sidebar)
 4. Scroll down to **"Root Directory"**
-5. Set it to: `apps/server`
-6. Click **"Save"**
+5. **Set it to: `.` (project root - just a dot)**
+   - This is CRITICAL for the Dockerfile to work
+   - The Dockerfile needs to see the full monorepo structure
+6. Scroll to **"Dockerfile Path"** (if visible)
+   - Set to: `apps/server/Dockerfile`
+7. Click **"Save"**
 
 ## Step 4: Set Build Command
 
@@ -31,7 +37,7 @@ Follow these exact steps to deploy your server to Railway.
 2. Find **"Build Command"** field
 3. Paste this exact command:
    ```
-   cd ../.. && npm ci && npm run build:shared && cd apps/server && npx prisma generate && npm run build:server
+   cd ../.. && npm install && npm run build:shared && cd apps/server && npx prisma generate && npm run build:server
    ```
    (This uses `npm ci` which is more reliable for builds and avoids conflicts)
 4. Find **"Start Command"** field

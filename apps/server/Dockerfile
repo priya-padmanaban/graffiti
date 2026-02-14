@@ -1,4 +1,5 @@
 # Dockerfile for WebSocket server (for Railway/Render)
+# This assumes Railway builds from project root, not apps/server
 FROM node:18-alpine
 
 WORKDIR /app
@@ -9,7 +10,7 @@ COPY packages/shared ./packages/shared
 COPY apps/server ./apps/server
 
 # Install dependencies (from root)
-RUN npm ci
+RUN npm install
 
 # Build shared package first
 RUN cd packages/shared && npm run build
