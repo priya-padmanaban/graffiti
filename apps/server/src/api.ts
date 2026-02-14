@@ -55,6 +55,59 @@ app.get("/api/rooms/:roomId/state", async (req, res) => {
   }
 });
 
+/**
+ * GET /api/admin/rooms
+ * Returns list of all rooms with content (stroke counts and metadata)
+ * Useful for monitoring which rooms have been used
+ */
+app.get("/api/admin/rooms", async (req, res) => {
+  try {
+    // Get all unique roomIds from strokes
+    const roomsWithStrokes = await prisma.stroke.groupBy({
+      by: ["roomId"],
+      _count: {
+        id: true,
+      },
+      _max: {
+        createdAt: true,
+      },
+    });
+
+    // Get snapshot counts per room
+    const roomsWithSnapshots = await prisma.snapshot.groupBy({
+      by: ["roomId"],
+      _count: {
+        id: true,
+      },
+    });
+
+    const snapshotCounts = new Map(
+      roomsWithSnapshots.map((r) => [r.roomId, r._count.id])
+    );
+
+    // Format response
+    const rooms = roomsWithStrokes.map((room) => ({
+      roomId: room.roomId,
+      strokeCount: room._count.id,
+      lastStrokeAt: room._max.createdAt,
+      snapshotCount: snapshotCounts.get(room.roomId) || 0,
+      url: `https://${req.get("host")?.replace(/:\d+$/, "") || "graffiti.monster"}/r/${room.roomId}`,
+    }));
+
+    // Sort by last stroke date (most recent first)
+    rooms.sort((a, b) => {
+      const dateA = a.lastStrokeAt ? new Date(a.lastStrokeAt).getTime() : 0;
+      const dateB = b.lastStrokeAt ? new Date(b.lastStrokeAt).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    res.json({ rooms, total: rooms.length });
+  } catch (error) {
+    console.error("Error getting rooms list:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export function createApiServer(port: number): Server {
   if (!httpServer) {
     httpServer = createServer(app);

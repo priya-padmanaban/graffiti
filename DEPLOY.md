@@ -148,7 +148,45 @@ If you can't access the terminal, you can modify the Dockerfile to run migration
 
 **Note:** If migrations fail, check that `DATABASE_URL` is set correctly in Railway variables.
 
-## Part 3: Connect Vercel to Railway
+## Part 3: Set Up Custom Domain (Optional)
+
+If you have a custom domain (e.g., `graffiti.monster`), you can configure it with Vercel:
+
+### Step 1: Add Domain in Vercel
+
+1. Go to **Vercel** → Your Project → **Settings** → **Domains**
+2. Enter your domain: `graffiti.monster` (or `www.graffiti.monster` if you prefer)
+3. Click **"Add"**
+4. Vercel will show you DNS records to add
+
+### Step 2: Configure DNS at Namecheap
+
+1. Go to [Namecheap](https://www.namecheap.com) → **Domain List** → Click **"Manage"** next to `graffiti.monster`
+2. Go to **"Advanced DNS"** tab
+3. Add the DNS records Vercel provided:
+   - **A Record** or **CNAME Record** pointing to Vercel's servers
+   - Usually something like: `CNAME www cname.vercel-dns.com` or `A @ 76.76.21.21`
+4. **Save** the changes
+
+### Step 3: Wait for DNS Propagation
+
+- DNS changes can take a few minutes to 48 hours (usually 5-30 minutes)
+- Vercel will show "Valid Configuration" when it's ready
+- You can check status in Vercel → Settings → Domains
+
+### Step 4: Update Railway CORS
+
+Once your domain is working, update Railway's CORS settings:
+
+1. Go to **Railway** → Your server service → **Variables** tab
+2. Find **`CORS_ORIGIN`** variable
+3. Update it to: `https://graffiti.monster` (or `https://www.graffiti.monster` if you used www)
+4. Click **"Save"**
+5. Railway will automatically redeploy
+
+**Note:** Your Vercel environment variables (`NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_WS_URL`) should still point to your Railway server URL - they don't need to change.
+
+## Part 4: Connect Vercel to Railway
 
 ### Step 1: Update Vercel Environment Variables
 
@@ -180,6 +218,54 @@ If you can't access the terminal, you can modify the Dockerfile to run migration
 3. **Try drawing** on the canvas
 4. **Check connection status** - should show "Connected"
 5. **Verify credits** are displaying correctly
+
+## Monitoring & Admin
+
+### Check Which Rooms Have Content
+
+**Option A: Admin API Endpoint (Easiest)**
+
+Visit this URL in your browser or use curl:
+```
+https://your-railway-url.railway.app/api/admin/rooms
+```
+
+This returns a JSON list of all rooms with:
+- `roomId`: The room identifier
+- `strokeCount`: Number of strokes in the room
+- `lastStrokeAt`: When the last stroke was drawn
+- `snapshotCount`: Number of snapshots for the room
+- `url`: Direct link to the room
+
+**Option B: Query Database Directly**
+
+1. In Railway, go to your **server service** → **Terminal** tab
+2. Run:
+   ```bash
+   cd apps/server
+   npx prisma studio
+   ```
+   - This opens Prisma Studio in your browser
+   - Navigate to the `Stroke` table
+   - Group by `roomId` to see which rooms have strokes
+
+**Option C: SQL Query via Railway Terminal**
+
+1. In Railway, go to your **PostgreSQL service** → **Terminal** tab
+2. Connect to the database:
+   ```bash
+   psql $DATABASE_URL
+   ```
+3. Run:
+   ```sql
+   SELECT 
+     "roomId",
+     COUNT(*) as stroke_count,
+     MAX("createdAt") as last_stroke
+   FROM "Stroke"
+   GROUP BY "roomId"
+   ORDER BY last_stroke DESC;
+   ```
 
 ## Troubleshooting
 
