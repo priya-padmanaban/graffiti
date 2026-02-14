@@ -8,11 +8,15 @@ import { createApiServer } from "./api";
 import { generateSnapshot } from "./snapshot";
 import { getRoomStrokeCount, resetRoomStrokeCount, getActiveRooms } from "./websocket";
 
-// Start HTTP API server
-createApiServer(config.port);
+// Start HTTP API server (use PORT env var if set, otherwise config.port)
+const httpPort = parseInt(process.env.PORT || String(config.port), 10);
+const httpServer = createApiServer(httpPort);
 
 // Start WebSocket server
-createWebSocketServer(config.wsPort);
+// On Railway, use the same port as HTTP (Railway only exposes one port)
+// Locally, use separate port for WebSocket
+const wsPort = process.env.PORT ? parseInt(process.env.PORT, 10) : config.wsPort;
+createWebSocketServer(wsPort, process.env.PORT ? httpServer : undefined);
 
 // Snapshot worker: periodically generate snapshots
 async function snapshotWorker(): Promise<void> {
@@ -40,6 +44,10 @@ async function snapshotWorker(): Promise<void> {
 setInterval(snapshotWorker, config.snapshot.intervalMs);
 
 console.log("Server started");
-console.log(`HTTP API: http://localhost:${config.port}`);
-console.log(`WebSocket: ws://localhost:${config.wsPort}`);
+console.log(`HTTP API: http://localhost:${httpPort}`);
+if (process.env.PORT) {
+  console.log(`WebSocket: ws://localhost:${httpPort} (attached to HTTP server)`);
+} else {
+  console.log(`WebSocket: ws://localhost:${wsPort}`);
+}
 

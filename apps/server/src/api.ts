@@ -3,12 +3,14 @@
  */
 
 import express from "express";
+import { createServer, Server } from "http";
 import { prisma } from "./db";
 import { getLatestSnapshotUrl, getStrokesSinceSnapshot } from "./snapshot";
 import { getCurrentCredits, hasInfiniteCredits } from "./credits";
 import { config } from "./config";
 
 const app = express();
+let httpServer: Server | null = null;
 
 app.use(express.json());
 
@@ -53,9 +55,13 @@ app.get("/api/rooms/:roomId/state", async (req, res) => {
   }
 });
 
-export function createApiServer(port: number): void {
-  app.listen(port, () => {
+export function createApiServer(port: number): Server {
+  if (!httpServer) {
+    httpServer = createServer(app);
+  }
+  httpServer.listen(port, () => {
     console.log(`HTTP API server listening on port ${port}`);
   });
+  return httpServer;
 }
 

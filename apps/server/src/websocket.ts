@@ -295,9 +295,13 @@ async function checkPeriodicCredits(conn: Connection): Promise<void> {
 
 /**
  * Create WebSocket server
+ * If httpServer is provided, attach to it (for Railway single port)
+ * Otherwise, create standalone server on specified port
  */
-export function createWebSocketServer(port: number): void {
-  const wss = new WebSocketServer({ port });
+export function createWebSocketServer(port: number, httpServer?: any): void {
+  const wss = httpServer 
+    ? new WebSocketServer({ server: httpServer })
+    : new WebSocketServer({ port });
 
   // Heartbeat to detect dead connections and award gradual credits
   const heartbeatInterval = setInterval(() => {
@@ -357,7 +361,11 @@ export function createWebSocketServer(port: number): void {
     clearInterval(heartbeatInterval);
   });
 
-  console.log(`WebSocket server listening on port ${port}`);
+  if (httpServer) {
+    console.log(`WebSocket server attached to HTTP server`);
+  } else {
+    console.log(`WebSocket server listening on port ${port}`);
+  }
 }
 
 /**
