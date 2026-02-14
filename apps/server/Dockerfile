@@ -10,7 +10,9 @@ COPY packages/shared ./packages/shared
 COPY apps/server ./apps/server
 
 # Install dependencies (from root)
-RUN npm install
+# Clear any existing npm cache to avoid conflicts
+RUN rm -rf node_modules/.cache 2>/dev/null || true
+RUN npm install --prefer-offline --no-audit
 
 # Build shared package first
 RUN cd packages/shared && npm run build
