@@ -2,8 +2,8 @@
 # This assumes Railway builds from project root, not apps/server
 FROM node:18-alpine
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl1.1-compat
+    # Install OpenSSL for Prisma
+    RUN apk add --no-cache openssl
 
 WORKDIR /app
 

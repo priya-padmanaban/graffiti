@@ -1,80 +1,280 @@
-# Quick Deployment Guide
+# Deployment Guide
 
-Deploy the web app to Vercel and the server to Railway.
+Complete guide to deploy the Graffiti app to Vercel (web) and Railway (server).
 
-## Step 1: Deploy Web App to Vercel
+## Prerequisites
 
-1. **Go to [vercel.com](https://vercel.com)** → New Project → Import your GitHub repo
+- GitHub repository with your code
+- Vercel account (free)
+- Railway account (free tier available)
+- Docker Desktop (for local PostgreSQL, optional)
 
-2. **Configure Project**:
+## Part 1: Deploy Web App to Vercel
+
+### Step 1: Create Vercel Project
+
+1. Go to [vercel.com](https://vercel.com) → **New Project**
+2. **Import your GitHub repository**
+3. Configure the project:
    - **Root Directory**: `apps/web`
    - **Framework**: Next.js (auto-detected)
    - **Build Command**: `cd ../.. && npm run build:shared && cd apps/web && npm run build`
    - **Install Command**: `cd ../.. && npm install`
+   - **Output Directory**: `.next` (default)
 
-3. **Add Environment Variables** (you'll update these after deploying the server):
+### Step 2: Add Environment Variables (Temporary)
+
+Add these now (you'll update them after deploying the server):
+
+1. Go to **Settings** → **Environment Variables**
+2. Add:
    ```
    NEXT_PUBLIC_API_URL=https://your-server-url.railway.app
    NEXT_PUBLIC_WS_URL=wss://your-server-url.railway.app
    ```
+   (Use placeholder URLs for now)
 
-4. **Deploy** → Wait for build to complete
+3. Click **Deploy**
 
-5. **Copy your Vercel URL** (e.g., `https://your-app.vercel.app`)
+4. **Copy your Vercel URL** (e.g., `https://your-app.vercel.app`)
 
-## Step 2: Deploy Server to Railway
+## Part 2: Deploy Server to Railway
 
-1. **Go to [railway.app](https://railway.app)** → New Project → Deploy from GitHub
+### Step 1: Create Railway Project
 
-2. **Select your repo** → Choose `apps/server` as root directory
+1. Go to [railway.app](https://railway.app) → **New Project**
+2. Select **"Deploy from GitHub repo"**
+3. Authorize Railway to access GitHub if needed
+4. Select your **graffiti** repository
+5. Click **"Deploy Now"**
 
-3. **Add PostgreSQL Database**:
-   - Click "+ New" → Database → PostgreSQL
-   - Copy the `DATABASE_URL` from the PostgreSQL service variables
+### Step 2: Configure Service Settings
 
-4. **Configure Build Settings**:
-   - Go to Settings → Build
-   - **Build Command**: `cd ../.. && npm install && npm run build:shared && cd apps/server && npx prisma generate && npm run build:server`
-   - **Start Command**: `npm start`
+1. Click on the service (named after your repo)
+2. Go to **Settings** tab
 
-5. **Add Environment Variables**:
-   ```
-   PORT=3001
-   WS_PORT=3002
-   DATABASE_URL=<paste from PostgreSQL service>
-   CORS_ORIGIN=https://your-app.vercel.app
-   R2_ENABLED=false
-   ```
+**Root Directory:**
+- Set to: `.` (just a dot - project root)
+- This is CRITICAL for the Dockerfile to work
 
-6. **Deploy** → Railway will build and deploy automatically
+**Dockerfile Path:**
+- Set to: `apps/server/Dockerfile`
+- Railway should auto-detect this
 
-7. **Get your Railway URL** (e.g., `graffiti-server-production.up.railway.app`)
+**Start Command:**
+- Leave empty (Dockerfile CMD handles it)
+- Or set to: `cd apps/server && node dist/index.js`
 
-## Step 3: Update Vercel Environment Variables
+**Build Command:**
+- Leave empty (Dockerfile handles the build)
+- Railway will use the Dockerfile automatically
 
-1. **Go back to Vercel** → Your Project → Settings → Environment Variables
+Click **"Save"**
 
-2. **Update the URLs** with your Railway server URL:
-   ```
-   NEXT_PUBLIC_API_URL=https://your-railway-url.railway.app
-   NEXT_PUBLIC_WS_URL=wss://your-railway-url.railway.app
-   ```
+### Step 3: Add PostgreSQL Database
 
-3. **Redeploy** Vercel (Deployments → ... → Redeploy)
+1. In your Railway project, click **"+ New"**
+2. Select **"Database"** → **"Add PostgreSQL"**
+3. Wait ~30 seconds for it to deploy
+4. Click on the **PostgreSQL** service
+5. Go to **"Variables"** tab
+6. **Copy the `DATABASE_URL`** value (you'll need it)
 
-## Step 4: Run Database Migrations
+### Step 4: Set Environment Variables
 
-1. **In Railway**, go to your server service → Connect → Open Shell
+1. Go back to your **server service** (not the database)
+2. Go to **"Variables"** tab
+3. Click **"+ New Variable"** for each:
 
-2. **Run migrations**:
+   **PORT:**
+   - Name: `PORT`
+   - Value: `3001`
+   - (Railway will override this, but set it anyway)
+
+   **WS_PORT:**
+   - Name: `WS_PORT`
+   - Value: `3002`
+   - (Not used on Railway, but good to have)
+
+   **DATABASE_URL:**
+   - Name: `DATABASE_URL`
+   - Value: Paste the URL from PostgreSQL service
+
+   **CORS_ORIGIN:**
+   - Name: `CORS_ORIGIN`
+   - Value: `https://your-app.vercel.app` (your Vercel URL from Part 1)
+
+   **R2_ENABLED:**
+   - Name: `R2_ENABLED`
+   - Value: `false`
+   - (Set to `true` later if you want snapshots with R2)
+
+4. Click **"Save"** after each variable
+
+### Step 5: Deploy and Get URL
+
+1. Railway will automatically start deploying
+2. Watch the build logs - you should see:
+   - ✅ OpenSSL installing
+   - ✅ Dependencies installing
+   - ✅ Shared package building
+   - ✅ Prisma generating
+   - ✅ Server building
+   - ✅ "Server started" message
+
+3. Once deployed, go to **Settings** → **Networking**
+4. Click **"Generate Domain"**
+5. **Copy your Railway URL** (e.g., `graffiti-server-production.up.railway.app`)
+
+### Step 6: Run Database Migrations
+
+1. In Railway, go to your **server service**
+2. Click **"Connect"** tab (or terminal icon)
+3. Click **"Open Shell"** or **"New Terminal"**
+4. Run:
    ```bash
+   cd apps/server
    npx prisma migrate deploy
    ```
+5. Wait for "Applied migration" messages
+6. Close the terminal
 
-Or use Railway CLI:
-```bash
-railway run npx prisma migrate deploy
+## Part 3: Connect Vercel to Railway
+
+### Step 1: Update Vercel Environment Variables
+
+1. Go back to **Vercel** → Your Project → **Settings** → **Environment Variables**
+
+2. **Update** the URLs with your actual Railway URL:
+
+   **NEXT_PUBLIC_API_URL:**
+   - Value: `https://your-railway-url.railway.app`
+   - (Use `https://`, not `http://`)
+
+   **NEXT_PUBLIC_WS_URL:**
+   - Value: `wss://your-railway-url.railway.app`
+   - (Use `wss://` for secure WebSocket, not `ws://`)
+
+3. Click **"Save"** for each
+
+### Step 2: Redeploy Vercel
+
+1. Go to **Deployments** tab
+2. Click **"..."** on the latest deployment
+3. Click **"Redeploy"**
+4. Wait for build to complete
+
+## Part 4: Test Everything
+
+1. **Open your Vercel app**: `https://your-app.vercel.app`
+2. **Check browser console** for any errors
+3. **Try drawing** on the canvas
+4. **Check connection status** - should show "Connected"
+5. **Verify credits** are displaying correctly
+
+## Troubleshooting
+
+### Build Fails on Railway
+
+**"Tracker 'idealTree' already exists"**
+- Railway auto-detects Dockerfile, so no build command needed
+- Make sure Root Directory is `.` (project root)
+- Make sure Dockerfile Path is `apps/server/Dockerfile`
+
+**"Cannot find module '@graffiti/shared'"**
+- Make sure Root Directory is `.` (not `apps/server`)
+- Dockerfile builds shared package first, so this should work
+
+**Prisma OpenSSL Error**
+- Already fixed in Dockerfile with `openssl1.1-compat`
+- If still happens, check build logs to confirm OpenSSL installed
+
+### WebSocket Not Connecting
+
+**Connection fails:**
+- Make sure you're using `wss://` (not `ws://`) in Vercel env vars
+- Check `CORS_ORIGIN` matches your Vercel domain exactly (no trailing slash)
+- Verify Railway service is running (check Deployments tab)
+
+**"Connection refused":**
+- Check Railway service is deployed and running
+- Verify the Railway URL is correct
+- Check Railway logs for errors
+
+### Database Errors
+
+**"Relation does not exist":**
+- Run migrations: `npx prisma migrate deploy` in Railway shell
+- Check `DATABASE_URL` is correct in Railway variables
+
+**Connection timeout:**
+- Verify PostgreSQL service is running in Railway
+- Check `DATABASE_URL` format is correct
+
+### Vercel Build Fails
+
+**TypeScript errors:**
+- Make sure shared package builds first
+- Check build command includes `npm run build:shared`
+
+**Module not found:**
+- Verify install command runs from project root
+- Check that workspaces are set up correctly
+
+## Environment Variables Summary
+
+### Vercel (`apps/web`)
 ```
+NEXT_PUBLIC_API_URL=https://your-railway-url.railway.app
+NEXT_PUBLIC_WS_URL=wss://your-railway-url.railway.app
+```
+
+### Railway (`apps/server`)
+```
+PORT=3001
+WS_PORT=3002
+DATABASE_URL=<from Railway PostgreSQL>
+CORS_ORIGIN=https://your-vercel-app.vercel.app
+R2_ENABLED=false
+```
+
+## Production Checklist
+
+- [ ] Web app deployed to Vercel
+- [ ] Server deployed to Railway
+- [ ] PostgreSQL database added
+- [ ] Environment variables set in both services
+- [ ] Database migrations run
+- [ ] Railway URL copied
+- [ ] Vercel env vars updated with Railway URL
+- [ ] Vercel redeployed
+- [ ] Tested drawing functionality
+- [ ] Tested WebSocket connection
+- [ ] Tested credit system
+- [ ] Tested cheat code
+
+## Optional: Enable Snapshots with R2
+
+If you want snapshot generation in production:
+
+1. **Create R2 bucket** in Cloudflare dashboard
+2. **Get credentials**:
+   - Endpoint URL
+   - Access Key ID
+   - Secret Access Key
+   - Public URL (if using custom domain)
+
+3. **Add to Railway environment variables**:
+   ```
+   R2_ENABLED=true
+   R2_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
+   R2_BUCKET=graffiti-snapshots
+   R2_ACCESS_KEY_ID=your-key
+   R2_SECRET_ACCESS_KEY=your-secret
+   R2_PUBLIC_URL=https://your-public-domain.com
+   ```
+
+4. **Redeploy Railway**
 
 ## That's It! 🎉
 
@@ -82,17 +282,4 @@ Your app should now be live:
 - **Web**: `https://your-app.vercel.app`
 - **Server**: `https://your-server.railway.app`
 
-## Troubleshooting
-
-**Build fails on Railway?**
-- Make sure build command includes `npm run build:shared` first
-- Check that root directory is `apps/server`
-
-**WebSocket not connecting?**
-- Use `wss://` (not `ws://`) in production
-- Check `CORS_ORIGIN` matches your Vercel domain exactly (no trailing slash)
-
-**Database errors?**
-- Run migrations: `npx prisma migrate deploy`
-- Verify `DATABASE_URL` is correct in Railway
-
+Both HTTP API and WebSocket run on the same Railway port automatically.
