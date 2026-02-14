@@ -2,8 +2,23 @@
 # This assumes Railway builds from project root, not apps/server
 FROM node:18-alpine
 
-    # Install OpenSSL for Prisma
-    RUN apk add --no-cache openssl
+# Install OpenSSL for Prisma and native dependencies for canvas
+# Note: -dev packages include both headers (for build) and shared libraries (for runtime)
+RUN apk add --no-cache \
+    openssl \
+    cairo \
+    cairo-dev \
+    jpeg \
+    jpeg-dev \
+    pango \
+    pango-dev \
+    giflib \
+    giflib-dev \
+    pixman \
+    pixman-dev \
+    python3 \
+    make \
+    g++
 
 WORKDIR /app
 

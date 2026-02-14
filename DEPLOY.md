@@ -107,7 +107,7 @@ Click **"Save"**
    **R2_ENABLED:**
    - Name: `R2_ENABLED`
    - Value: `false`
-   - (Set to `true` later if you want snapshots with R2)
+   - **💡 Cost-saving tip:** Set to `true` to enable snapshots, which dramatically reduces Railway egress costs by serving canvas images from R2 instead of sending all stroke data through Railway
 
 4. Click **"Save"** after each variable
 
@@ -350,26 +350,125 @@ R2_ENABLED=false
 
 ## Optional: Enable Snapshots with R2
 
-If you want snapshot generation in production:
+**💰 Highly Recommended for Cost Savings!**
 
-1. **Create R2 bucket** in Cloudflare dashboard
-2. **Get credentials**:
-   - Endpoint URL
-   - Access Key ID
-   - Secret Access Key
-   - Public URL (if using custom domain)
+Enabling snapshots dramatically reduces Railway egress costs. Instead of sending all stroke data (potentially MBs) through Railway every time someone loads a room, snapshots:
+- Store canvas images in Cloudflare R2 (free egress)
+- Only send recent strokes since the last snapshot (much less data)
+- Serve snapshot images directly from R2, bypassing Railway entirely
 
-3. **Add to Railway environment variables**:
-   ```
-   R2_ENABLED=true
-   R2_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
-   R2_BUCKET=graffiti-snapshots
-   R2_ACCESS_KEY_ID=your-key
-   R2_SECRET_ACCESS_KEY=your-secret
-   R2_PUBLIC_URL=https://your-public-domain.com
-   ```
+**To enable snapshot generation in production:**
 
-4. **Redeploy Railway**
+### Step 1: Get R2 API Token
+
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com) → **R2** → **Manage R2 API Tokens**
+2. Click **"Create API token"**
+3. Configure the token:
+   - **Token name**: `graffiti-snapshots` (or any name you prefer)
+   - **Permissions**: Select **"Object Read & Write"**
+   - **TTL**: Leave empty (no expiration) or set a date
+   - **Allow access to buckets**: Select your bucket name
+4. Click **"Create API Token"**
+5. **Copy both values immediately** (you won't see the secret again):
+   - **Access Key ID** → This is your `R2_ACCESS_KEY_ID`
+   - **Secret Access Key** → This is your `R2_SECRET_ACCESS_KEY`
+
+### Step 2: Get Your Account ID and Endpoint
+
+1. In Cloudflare Dashboard → **R2**, look at the URL or your account settings
+2. Your **Account ID** is visible in the R2 dashboard URL or in your account overview
+3. Your **Endpoint URL** format is: `https://<account-id>.r2.cloudflarestorage.com`
+   - Replace `<account-id>` with your actual Cloudflare account ID
+
+### Step 3: Set Up Public Access (Optional but Recommended)
+
+To serve snapshot images directly from R2:
+
+1. Go to your **R2 bucket** in Cloudflare Dashboard
+2. Click **Settings** tab
+3. Under **Public Access**, you can either:
+   - **Option A**: Use Cloudflare's default public URL (free)
+     - Format: `https://pub-<random-id>.r2.dev`
+     - This is automatically available for public buckets
+   - **Option B**: Connect a custom domain (requires Cloudflare Pages/Workers)
+4. If using Option A, your `R2_PUBLIC_URL` will be `https://pub-<random-id>.r2.dev`
+   - You can find this by making a file public and checking its URL
+
+### Step 4: Add Environment Variables to Railway
+
+1. Go to **Railway** → Your server service → **Variables** tab
+2. Add these variables:
+
+   **R2_ENABLED:**
+   - Value: `true`
+
+   **R2_ENDPOINT:**
+   - Value: `https://<your-account-id>.r2.cloudflarestorage.com`
+   - Replace `<your-account-id>` with your Cloudflare account ID
+
+   **R2_BUCKET:**
+   - Value: Your bucket name (e.g., `graffiti-snapshots`)
+
+   **R2_ACCESS_KEY_ID:**
+   - Value: The Access Key ID from Step 1
+
+   **R2_SECRET_ACCESS_KEY:**
+   - Value: The Secret Access Key from Step 1
+
+   **R2_PUBLIC_URL:** (Optional but recommended)
+   - Value: `https://pub-<random-id>.r2.dev` (from Step 3, Option A)
+   - Or your custom domain if you set one up
+
+3. Click **"Save"** after each variable
+
+### Step 5: Redeploy Railway
+
+Railway will automatically redeploy when you save the variables. Watch the logs to confirm snapshots are working - you should see messages like:
+```
+Generated snapshot for room <roomId>: <snapshot-id>
+```
+
+**Note:** Make sure your R2 bucket allows public read access for the snapshot images, or configure a public URL as described in Step 3.
+
+### Step 6: Verify Snapshots Are Working
+
+**When will snapshots appear?**
+
+Snapshots are generated automatically when:
+- A room accumulates **100 strokes** (default threshold, configurable via `SNAPSHOT_STROKE_THRESHOLD`)
+- The snapshot worker runs (checks every **30 seconds** by default, configurable via `SNAPSHOT_INTERVAL_MS`)
+
+**So you'll see snapshots appear:**
+- After drawing at least 100 strokes in a room
+- Within 30 seconds of reaching that threshold (when the worker next runs)
+
+**How to verify:**
+
+1. **Check Railway logs:**
+   - Go to Railway → Your server service → **Deployments** → Click latest deployment → **View Logs**
+   - Look for messages like:
+     ```
+     Triggering snapshot for room <roomId> (100 strokes)
+     Generated snapshot for room <roomId>: <snapshot-id>
+     ```
+
+2. **Check your R2 bucket:**
+   - Go to Cloudflare Dashboard → **R2** → Your bucket
+   - You should see files in `snapshots/<roomId>/` folders
+   - Files are named like: `snapshots/global/1234567890-abc123.png`
+
+3. **Test by drawing:**
+   - Open your app and draw in a room
+   - Draw at least 100 strokes (you can draw quickly to test)
+   - Wait up to 30 seconds
+   - Check Railway logs and your R2 bucket
+
+**If snapshots aren't appearing:**
+- Verify all R2 environment variables are set correctly in Railway
+- Check Railway logs for errors (especially R2 connection errors)
+- Make sure `R2_ENABLED=true` is set
+- Verify your R2 API token has "Object Read & Write" permissions
+- Check that the bucket name matches exactly
 
 ## That's It! 🎉
 
