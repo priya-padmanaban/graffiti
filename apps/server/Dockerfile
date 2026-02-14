@@ -9,7 +9,7 @@ COPY packages/shared ./packages/shared
 COPY apps/server ./apps/server
 
 # Install dependencies (from root)
-RUN npm install
+RUN npm ci
 
 # Build shared package first
 RUN cd packages/shared && npm run build

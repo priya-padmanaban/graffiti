@@ -6,6 +6,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "cd ../.. && npm run build:shared && cd apps/server && tsc",
     "build:server": "tsc",
+    "build:full": "cd ../.. && npm ci && npm run build:shared && cd apps/server && npx prisma generate && npm run build:server",
     "start": "node dist/index.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
