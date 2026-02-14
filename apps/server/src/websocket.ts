@@ -186,7 +186,7 @@ async function handleMessage(conn: Connection, rawMessage: string): Promise<void
           data: {
             userId: conn.userId,
             roomId: message.chunk.roomId,
-            points: message.chunk.points,
+            points: message.chunk.points as any, // Prisma Json type
             color: message.chunk.color,
             size: message.chunk.size,
             opacity: message.chunk.opacity,
