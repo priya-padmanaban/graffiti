@@ -27,5 +27,5 @@ WORKDIR /app/apps/server
 
 EXPOSE 3001 3002
 
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
 
